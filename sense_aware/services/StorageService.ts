@@ -1,18 +1,40 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SensorData } from '../types';
+import { SensorData, Settings } from '../types';
 
-const STORAGE_KEY = 'SENSE_HISTORY';
+const HISTORY_KEY = 'SENSE_HISTORY';
+const SETTINGS_KEY = 'SENSE_SETTINGS';
 
 const StorageService = {
     async save(entry: SensorData) {
-        const history = await StorageService.getHistory();
+        const history = await this.getHistory();
         history.unshift(entry);
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+        // Keep only last 100 entries
+        const trimmed = history.slice(0, 100);
+        await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
     },
+
     async getHistory(): Promise<SensorData[]> {
-        const data = await AsyncStorage.getItem(STORAGE_KEY);
+        const data = await AsyncStorage.getItem(HISTORY_KEY);
         return data ? JSON.parse(data) : [];
-    }
+    },
+
+    async saveSettings(settings: Settings) {
+        await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    },
+
+    async getSettings(): Promise<Settings> {
+        const data = await AsyncStorage.getItem(SETTINGS_KEY);
+        return data ? JSON.parse(data) : {
+            ttsEnabled: true,
+            notificationsEnabled: true,
+            migraineModeEnabled: false,
+            sitThreshold: 15,
+        };
+    },
+
+    async clearHistory() {
+        await AsyncStorage.removeItem(HISTORY_KEY);
+    },
 };
 
 export default StorageService;
