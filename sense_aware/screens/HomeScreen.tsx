@@ -36,8 +36,11 @@ export default function HomeScreen() {
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        loadSettings();
-        NotificationService.init();
+        const initAsync = async () => {
+            await loadSettings();
+            NotificationService.init();
+        };
+        initAsync();
 
         // Pulse animation
         const pulse = Animated.loop(
@@ -57,7 +60,10 @@ export default function HomeScreen() {
         pulse.start();
 
         SensorService.subscribe(handleSensorData);
-        return () => SensorService.unsubscribe();
+        return () => {
+            pulse.stop();
+            SensorService.unsubscribe();
+        };
     }, []);
 
     const loadSettings = async () => {
